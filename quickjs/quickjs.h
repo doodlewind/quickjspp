@@ -28,6 +28,10 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined(__GNUC__) || defined(__clang__)
 #define js_likely(x)          __builtin_expect(!!(x), 1)
 #define js_unlikely(x)        __builtin_expect(!!(x), 0)
@@ -201,13 +205,8 @@ typedef struct JSValue {
 #define JS_VALUE_GET_FLOAT64(v) ((v).u.float64)
 #define JS_VALUE_GET_PTR(v) ((v).u.ptr)
 
-#ifdef __cplusplus
-#define JS_MKVAL(tag, val) JSValue{ JSValueUnion{.int32 = val}, tag }
-#define JS_MKPTR(tag, p) JSValue{ JSValueUnion{.ptr = p}, tag }
-#else
-#define JS_MKVAL(tag, val) (JSValue){ .u.int32 = val, tag }
-#define JS_MKPTR(tag, p) (JSValue){ .u.ptr = p, tag }
-#endif
+#define JS_MKVAL(tag, val) (JSValue){ (JSValueUnion){ .int32 = val }, tag }
+#define JS_MKPTR(tag, p) (JSValue){ (JSValueUnion){ .ptr = p }, tag }
 
 #define JS_TAG_IS_FLOAT64(tag) ((unsigned)(tag) == JS_TAG_FLOAT64)
 
@@ -692,6 +691,7 @@ JSValue JS_CallConstructor(JSContext *ctx, JSValueConst func_obj,
 JSValue JS_CallConstructor2(JSContext *ctx, JSValueConst func_obj,
                             JSValueConst new_target,
                             int argc, JSValueConst *argv);
+JS_BOOL JS_DetectModule(const char *input, size_t input_len);
 JSValue JS_Eval(JSContext *ctx, const char *input, size_t input_len,
                 const char *filename, int eval_flags);
 #define JS_EVAL_BINARY_LOAD_ONLY (1 << 0) /* only load the module */
@@ -899,5 +899,9 @@ int JS_SetModuleExportList(JSContext *ctx, JSModuleDef *m,
 
 #undef js_unlikely
 #undef js_force_inline
+
+#ifdef __cplusplus
+} /* extern "C" { */
+#endif
 
 #endif /* QUICKJS_H */
